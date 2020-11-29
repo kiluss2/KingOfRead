@@ -40,5 +40,5 @@
         android:layout_rowSpan="2"
         android:layout_column="1"
         android:scaleType="fitXY"
-        tools:srcCompat="@tools:sample/backgrounds/scenic" />
+        tools:srcCompat="@tools:sample/backgrounds/scenic"/>
 </GridLayout>
