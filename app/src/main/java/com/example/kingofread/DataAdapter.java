@@ -1,59 +1,136 @@
 package com.example.kingofread;
 
 import android.app.Activity;
+import android.content.Context;
+import android.support.annotation.NonNull;
+import android.support.constraint.ConstraintLayout;
+import android.support.v7.widget.CardView;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.BaseAdapter;
+import android.widget.Button;
+import android.widget.Filter;
+import android.widget.Filterable;
+import android.widget.GridLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
-public class DataAdapter extends BaseAdapter {
-    private String[] bookTitles;
-    private String[] bookDescriptions;
-    private Integer[] bookCovers;
-    private Activity activity;
+import java.util.ArrayList;
+import java.util.List;
 
-    public DataAdapter(Activity activity, String[] bookTitles,String[] bookDescriptions, Integer[] bookCovers){
-        this.activity = activity;
-        this.bookTitles = bookTitles;
-        this.bookDescriptions = bookDescriptions;
-        this.bookCovers = bookCovers;
+public class DataAdapter extends RecyclerView.Adapter<DataAdapter.MyViewHolder> implements Filterable {
+    private ArrayList<Book> mBook;
+    private ArrayList<Book> mBookFull;
+    private Context mContext;
+    ;
+
+    public DataAdapter(Context mContext, ArrayList<Book> mBook) {
+        this.mContext = mContext;
+        this.mBook = mBook;
+        mBookFull = new ArrayList<>(mBook);
+    }
+
+    @NonNull
+    @Override
+    public DataAdapter.MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View v = (View) LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.row_layout, parent, false);
+        return new MyViewHolder(v);
     }
 
     @Override
-    public int getCount() {
-        return bookTitles.length;
+    public void onBindViewHolder(@NonNull MyViewHolder myViewHolder, int position) {
+        myViewHolder.tvTitle.setText(mBook.get(position).getTitle());
+        myViewHolder.tvDescription.setText(mBook.get(position).getDescriptions());
+        myViewHolder.ivCover.setImageResource(mBook.get(position).getCover());
+    }
+
+
+    @Override
+    public int getItemCount() {
+        return mBook.size();
     }
 
     @Override
-    public Object getItem(int position) {
-        return null;
+    public Filter getFilter() {
+        return myFilter;
     }
 
-    @Override
-    public long getItemId(int position) {
-        return position;
-    }
+    private Filter myFilter = new Filter() { //filer de do ket qua search ra view
+        @Override
+        protected FilterResults performFiltering(CharSequence constraint) {
+            List<Book> filteredList = new ArrayList<>();
+            if (constraint == null || constraint.length() == 0) {
+                filteredList.addAll(mBookFull);
+            } else {
+                String filterPattern = constraint.toString().toLowerCase().trim();
+                for (Book item : mBookFull) {
+                    if (item.getTitle().toLowerCase().contains(filterPattern)) {
+                        filteredList.add(item);
+                    }
+                }
+            }
+            FilterResults results = new FilterResults();
+            results.values = filteredList;
+            return results;
+        }
 
-    @Override
-    public View getView(int position, View view, ViewGroup viewGroup) {
-        //goi layoutinflater de bat dau anh xa view va data
-        LayoutInflater inflater = activity.getLayoutInflater();
+        @Override
+        protected void publishResults(CharSequence constraint, FilterResults results) {
+            mBook.clear();
+            mBook.addAll((List) results.values);
+            notifyDataSetChanged();
+        }
+    };
 
-        //do data vao bien view, view này chính là những gì nằm trong item_text.xml
-        view = inflater.inflate(R.layout.row_layout, null);
+    public class MyViewHolder extends RecyclerView.ViewHolder {
+        private final View view;
+        public TextView tvTitle;
+        public TextView tvDescription;
+        public ImageView ivCover;
+        public Button favBtn;
+        CardView layoutBook;
 
-        // dat chu cho tung view trong danh sach
-        TextView tvTitle = (TextView) view.findViewById(R.id.tv_book_title);
-        TextView tvDescription = (TextView) view.findViewById(R.id.tv_book_description);
-        ImageView ivCover = (ImageView) view.findViewById(R.id.iv_book_cover);
+        public View View;
 
-        tvTitle.setText(bookTitles[position]);
-        tvDescription.setText(bookDescriptions[position]);
-        ivCover.setImageResource(bookCovers[position]);
+        public MyViewHolder(View view) {
+            super(view);
+            this.view = view;
+            tvTitle = this.view.findViewById(R.id.tv_book_title);
+            tvDescription = this.view.findViewById(R.id.tv_book_description);
+            ivCover = this.view.findViewById(R.id.iv_book_cover);
+            favBtn = this.view.findViewById(R.id.fav_btn);
+            layoutBook = this.view.findViewById(R.id.cardview_item);
 
-        //tra ve view ket qua
-        return view;
+
+            layoutBook.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(android.view.View v) {
+                    Book book = mBook.get(getAdapterPosition());
+                    Toast.makeText(mContext.getApplicationContext(), "You Selected " + book.getTitle(), Toast.LENGTH_SHORT).show();
+//                    notifyItemChanged(getAdapterPosition());
+                }
+            });
+            favBtn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(android.view.View v) {
+                    Book book = mBook.get(getAdapterPosition());
+                    if(book.getFavStatus()==0) {
+                        book.setFavStatus(1);
+                        favBtn.setBackgroundResource(R.drawable.ic_fav_added);
+                        Toast.makeText(mContext.getApplicationContext(), "You Added " + book.getTitle() + "To Favorite", Toast.LENGTH_SHORT).show();
+                    }else {
+                        book.setFavStatus(0);
+                        favBtn.setBackgroundResource(R.drawable.ic_fav_original);
+                        Toast.makeText(mContext.getApplicationContext(), "You Removed " + book.getTitle() + "To Favorite", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+
+
+        }
     }
 }

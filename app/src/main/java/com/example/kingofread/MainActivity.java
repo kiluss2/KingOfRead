@@ -2,6 +2,12 @@ package com.example.kingofread;
 
 import android.graphics.Typeface;
 import android.os.Bundle;
+
+import android.support.constraint.ConstraintLayout;
+import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.Menu;
 import android.support.design.widget.FloatingActionButton;
@@ -16,16 +22,23 @@ import androidx.navigation.ui.NavigationUI;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.inputmethod.EditorInfo;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.SearchView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
     private AppBarConfiguration mAppBarConfiguration;
     private TextView tvEmpty;
-    private ListView listBook;
+    private RecyclerView listBook;
+
+    private DataAdapter adapter;
+    private ArrayList<Book> books;
     private String[] bookTitles;
     private String[] bookDescriptions;
     private Integer[] bookCovers;
@@ -35,16 +48,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        TextView textView = new TextView(this);
-        textView.setTypeface(Typeface.DEFAULT_BOLD);
-        textView.setText("List of Books");
-
-        bookTitles = new String[]{"cac cu co cau",
-                                "co lam thi moi",
-                                "co an",
-                                "khong lam",
-                                "ma doi co an"
-                                , "lieu thi an nhieuuuuuuuuuu hsdjfsdhfjksksdfs dkfldj", "khong lieu", "thi an it", "can cu", "thi bu", "sieng nang"
+        bookTitles = new String[]{"cac cu co cau", "co lam thi moi", "co an", "khong lam", "ma doi co an"
+                , "lieu thi an nhieuuuuuuuuuu hsdjfsdhfjksksdfs dkfldj", "khong lieu", "thi an it", "can cu", "thi bu", "sieng nang"
                 , "nguy hiem mot ti", "nhung trong", "tam", "kiem soat"};
         bookDescriptions = new String[]{"cac cu co cau", "co lam thi moi", "co an", "khong lam", "ma doi co an"
                 , "lieu thi an nhieu ok jdhwjk kdsj osfji lslfjo kii kkklo", "khong lieu", "thi an it", "can cu", "thi bu", "sieng nang"
@@ -64,23 +69,22 @@ public class MainActivity extends AppCompatActivity {
                 R.drawable.b,
                 R.drawable.c,
                 R.drawable.d,
-                R.drawable.e,};
+                R.drawable.e};
+
+        books = new ArrayList<Book>();
+        for(int i=0;i<15;i++){
+            books.add(new Book(bookTitles[i],bookDescriptions[i],bookCovers[i],0));
+        }
 
 
         tvEmpty =findViewById(R.id.tv_book_empty);
         listBook = findViewById(R.id.lv_book);
-        listBook.addHeaderView(textView);
-        if(bookTitles.length>0) tvEmpty.setVisibility(View.GONE);
+        if(books.size()!=0) tvEmpty.setVisibility(View.GONE);
+        listBook.setLayoutManager(new LinearLayoutManager(this));
+        adapter = new DataAdapter(this,books);
 
-        DataAdapter adapter = new DataAdapter(this,bookTitles,bookDescriptions,bookCovers);
         listBook.setAdapter(adapter);
 
-        listBook.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
-                Toast.makeText(getApplicationContext(),"You Selected " + bookTitles[position-1]+ " as Country", Toast.LENGTH_SHORT).show();
-            }
-        });
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -109,6 +113,23 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
+
+        MenuItem searchItem = menu.findItem(R.id.action_search);
+        SearchView searchView = (SearchView) searchItem.getActionView();
+
+        searchView.setImeOptions(EditorInfo.IME_ACTION_DONE);
+        searchView.setQueryHint("Type book name");
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                return false;
+            }
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                adapter.getFilter().filter(newText);
+                return false;
+            }
+        });
         return true;
     }
 
