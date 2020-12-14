@@ -42,6 +42,7 @@ public class MainActivity extends AppCompatActivity {
     private String[] bookTitles;
     private String[] bookDescriptions;
     private Integer[] bookCovers;
+    public StorageReference storageReference;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,14 +77,73 @@ public class MainActivity extends AppCompatActivity {
             books.add(new Book(bookTitles[i],bookDescriptions[i],bookCovers[i],0));
         }
 
+        /* storage = FirebaseStorage.getInstance();
+        storageRef = storage.getReferenceFromUrl("gs://kingofread-7e7cc.appspot.com");
+
+        StorageReference spaceRef = storageRef.child("Purple Haze Feedback.pdf");
+        StorageReference rootRef = spaceRef.getRoot();
+        StorageReference nullRef = spaceRef.getRoot().getParent();
+        spaceRef.getPath();
+        spaceRef.getName();
+
+
+        StorageReference listRef = storage.getReference().child("files/uid");
+
+        listRef.listAll()
+        .addOnSuccessListener(new OnSuccessListener<ListResult>() {
+            @Override
+            public void onSuccess(ListResult listResult) {
+                for (StorageReference prefix : listResult.getPrefixes()) {
+                    // All the prefixes under listRef.
+                    // You may call listAll() recursively on them.
+                }
+
+                for (StorageReference item : listResult.getItems()) {
+                    // All the items under listRef.
+                }
+            }
+        })
+        .addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                // Uh-oh, an error occurred!
+            }
+        });
+
+         */
 
         tvEmpty =findViewById(R.id.tv_book_empty);
         listBook = findViewById(R.id.lv_book);
-        if(books.size()!=0) tvEmpty.setVisibility(View.GONE);
-        listBook.setLayoutManager(new LinearLayoutManager(this));
+            if(books.size()!=0) tvEmpty.setVisibility(View.GONE);
+            listBook.setLayoutManager(new LinearLayoutManager(this));
         adapter = new DataAdapter(this,books);
 
         listBook.setAdapter(adapter);
+
+        storageReference = FirebaseStorage.getInstance().getReferenceFromUrl("gs://kingofread-7e7cc.appspot.com");
+        storageReference.listAll().addOnSuccessListener(new OnSuccessListener<ListResult>() {
+            @Override
+            public void onSuccess(ListResult listResult) {
+                for(StorageReference fileRef : listResult.getItems()){
+                    fileRef.getDownloadUrl()
+                            .addOnSuccessListener(new OnSuccessListener<Uri>() {
+                                @Override
+                                public void onSuccess(Uri uri) {
+                                    books.add(new Book(uri.getQueryParameterNames().toString(), "a", 1, 0));
+                                }
+                            }).addOnSuccessListener(new OnSuccessListener<Uri>() {
+                        @Override
+                        public void onSuccess(Uri uri) {
+                            listBook.setAdapter(adapter);
+                        }
+                    }).addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                        }
+                    });
+                }
+            }
+        });
 
 
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -105,7 +165,7 @@ public class MainActivity extends AppCompatActivity {
                 .setDrawerLayout(drawer)
                 .build();
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
-        NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
+        //NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
     }
 
@@ -132,11 +192,11 @@ public class MainActivity extends AppCompatActivity {
         });
         return true;
     }
-
     @Override
     public boolean onSupportNavigateUp() {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
         return NavigationUI.navigateUp(navController, mAppBarConfiguration)
                 || super.onSupportNavigateUp();
     }
+
 }
